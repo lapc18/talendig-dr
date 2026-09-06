@@ -1,0 +1,56 @@
+rules_version = '2';
+
+// Security model for Talendig Classes Record.
+//
+// Class records are public reference material: anyone can read them without
+// signing in, which is what the public consultation relies on. Only an
+// authenticated teacher can create, change or delete one.
+//
+// These rules are the real boundary. The client-side route guard is only a
+// convenience for the interface.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /classes/{classId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+                    && isValidClass(request.resource.data);
+
+      allow update: if request.auth != null
+                    && isValidClass(request.resource.data);
+
+      allow delete: if request.auth != null;
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Rejects writes that would break the reader's expectations: the mapper
+    // parses every field strictly, so a malformed document is a broken row in
+    // the interface.
+    function isValidClass(data) {
+      return data.keys().hasAll(
+               ['date', 'code', 'name', 'teacher', 'link', 'comment',
+                'keywords', 'createdAt', 'updatedAt', 'updatedBy']
+             )
+             && data.date is string
+             && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+             && data.code is string
+             && data.code.matches('^[A-Z]{2,6}-[0-9]{2,4}$')
+             && data.name is string
+             && data.name.size() > 0
+             && data.name.size() <= 120
+             && data.teacher is string
+             && data.teacher.size() > 0
+             && data.link is string
+             && data.link.matches('^https://.*')
+             && data.comment is string
+             && data.comment.size() <= 600
+             && data.keywords is list
+             && data.updatedBy is string;
+    }
+  }
+}

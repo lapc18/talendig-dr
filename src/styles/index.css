@@ -1,0 +1,76 @@
+/**
+ * Global stylesheet: token import, font loading, base element styles and the
+ * few shared primitives (focus ring, shimmer) that the design defines once and
+ * reuses everywhere.
+ */
+
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Montserrat and JetBrains Mono are loaded from `index.html` with preconnect,
+ * so the request starts during HTML parsing rather than after the stylesheet
+ * has been fetched and parsed.
+ *
+ * Gotham is a licensed typeface with no free web distribution, so the stack
+ * falls through to Montserrat. Dropping Gotham's woff2 files into
+ * `public/fonts` and declaring @font-face here is the only change needed.
+ */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-ink-100);
+    color: var(--color-navy-900);
+    font-family: var(--font-sans);
+  }
+
+  /*
+   * Teal 500 on white is 2.7:1 and fails AA for text, so links use Teal 700
+   * (4.9:1). Teal 500 is reserved for surfaces, borders and focus rings.
+   */
+  a {
+    color: var(--color-teal-700);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-teal-800);
+    text-decoration: underline;
+  }
+
+  /* The design specifies one focus treatment for every interactive element. */
+  :focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 6px var(--color-teal-500);
+  }
+}
+
+@layer utilities {
+  /* Skeleton placeholders pulse rather than sweep: cheaper and less noisy. */
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer {
+      animation: none;
+    }
+  }
+}

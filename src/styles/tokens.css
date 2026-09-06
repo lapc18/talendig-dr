@@ -1,0 +1,96 @@
+/**
+ * Design tokens for Talendig Classes Record.
+ *
+ * Single source of truth for colour, typography, radius and elevation.
+ * Values are transcribed from the design canvas style tile (artboard 1j) in
+ * `docs/design/talendig-classes-record.dc.html`. Components consume these
+ * tokens through Tailwind utilities; hardcoded hex values in components are a
+ * review failure.
+ */
+
+@theme {
+  /* -- Brand: navy is the anchor -------------------------------------- */
+  --color-navy-50: #f2f1f7;
+  --color-navy-100: #e2e0ee;
+  --color-navy-200: #c4c0dc;
+  --color-navy-300: #9a94bf;
+  --color-navy-400: #6f67a0;
+  --color-navy-500: #4a3f86;
+  --color-navy-700: #1b0d53;
+  --color-navy-900: #110546;
+  --color-navy-950: #0c0333;
+
+  /* -- Brand: teal is the signature, used sparingly -------------------- */
+  --color-teal-50: #e9f6f8;
+  --color-teal-100: #cfedf1;
+  --color-teal-200: #a3dce3;
+  --color-teal-300: #6fc7d1;
+  --color-teal-400: #43b2bf;
+  --color-teal-500: #27a5b2;
+  --color-teal-700: #196a75;
+  --color-teal-800: #14555e;
+
+  /* -- Neutrals: grey with a blue cast so it sits with the navy -------- */
+  --color-ink-50: #f7f8fa;
+  --color-ink-100: #edeff4;
+  --color-ink-200: #dde1ea;
+  --color-ink-400: #a8aebf;
+  --color-ink-600: #6b7285;
+  --color-ink-700: #494f60;
+
+  /* -- Semantic: subordinate to the brand ------------------------------ */
+  --color-success: #1e7a5f;
+  --color-warning: #a8710b;
+  --color-danger: #b3261e;
+  --color-danger-strong: #8e1e18;
+  --color-danger-surface: #fbecea;
+  --color-danger-border: #f3c9c5;
+  --color-danger-border-strong: #e8a19b;
+
+  /* -- Typography ------------------------------------------------------ */
+  --font-sans: Gotham, "Montserrat", "Poppins", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.09;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 900;
+
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 800;
+
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 800;
+
+  --text-h3: 1.125rem;
+  --text-h3--line-height: 1.35;
+  --text-h3--font-weight: 700;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5;
+
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.45;
+
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.35;
+  --text-caption--letter-spacing: 0.08em;
+  --text-caption--font-weight: 600;
+
+  /* -- Radius: inputs/buttons 11px, cards 14px, dialogs 16px ----------- */
+  --radius-badge: 7px;
+  --radius-control: 11px;
+  --radius-card: 14px;
+  --radius-dialog: 16px;
+
+  /* -- Elevation ------------------------------------------------------- */
+  --shadow-card: 0 2px 10px rgb(17 5 70 / 0.06);
+  --shadow-row: 0 1px 6px rgb(17 5 70 / 0.05);
+  --shadow-panel: -12px 0 40px rgb(17 5 70 / 0.18);
+  --shadow-dialog: 0 24px 60px rgb(17 5 70 / 0.3);
+  --shadow-auth: 0 20px 50px rgb(0 0 0 / 0.28);
+}

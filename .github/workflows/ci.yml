@@ -1,0 +1,45 @@
+# Quality gates for every push and pull request.
+#
+# Deliberately runs with no secrets: type checking, linting and the test suite
+# never read the Firebase configuration. `vitest.config.ts` supplies its own
+# fake values, and `import.meta.env` is only consulted in the browser at
+# runtime. Keeping secrets out of this workflow means a fork's pull request can
+# still be checked.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, test and type check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # `pnpm build` runs `tsc -b` first, so this covers type checking too.
+      - name: Type check and build
+        run: pnpm build
