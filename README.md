@@ -154,41 +154,67 @@ trates como una medida de seguridad**. La única credencial de verdad aquí es
 | Workflow | Cuándo corre | Secrets |
 |---|---|---|
 | [`ci.yml`](./.github/workflows/ci.yml) | Cada push y PR | **Ninguno** |
-| [`deploy.yml`](./.github/workflows/deploy.yml) | Manual (`workflow_dispatch`) | Todos |
+| [`deploy.yml`](./.github/workflows/deploy.yml) | Manual (`workflow_dispatch`) | Environment `production` |
 
 CI no necesita secrets porque `pnpm lint`, `pnpm test` y `pnpm build` pasan sin
 variables de entorno: las pruebas traen su propia configuración falsa y
 `import.meta.env` solo se lee en el navegador. Eso además permite que un PR desde
-un fork se verifique igual.
+un fork se verifique igual, sin exponerle nada.
 
 El deploy sí las necesita: Vite las incrusta en el bundle en tiempo de build, y
 si falta una la app arranca con pantalla en blanco. Por eso el workflow verifica
 que estén completas **antes** de construir.
 
-### Cargar los secrets
+### El environment `production`
 
-Con el proyecto ya en GitHub y `.env.local` lleno:
+Los valores viven en el environment `production`, no en secrets del repositorio.
+Eso da historial de despliegues en GitHub y permite exigir revisores desde
+*Settings → Environments → production → Required reviewers* sin tocar el
+workflow.
+
+| Secret | Estado | Notas |
+|---|---|---|
+| `VITE_FIREBASE_API_KEY` | ✅ | |
+| `VITE_FIREBASE_AUTH_DOMAIN` | ✅ | |
+| `VITE_FIREBASE_PROJECT_ID` | ✅ | También es el destino del deploy |
+| `VITE_FIREBASE_STORAGE_BUCKET` | ✅ | |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | ✅ | |
+| `VITE_FIREBASE_APP_ID` | ✅ | |
+| `VITE_MEASUREMENT_ID` | ✅ | Ver la nota de nombres abajo |
+| `VITE_AUTH_USERNAME_DOMAIN` | ⚠️ sin definir | Ver la advertencia abajo |
+| `FIREBASE_SERVICE_ACCOUNT` | ❌ falta | Sin esto el deploy no corre |
+
+Para cargarlos desde tu `.env.local`:
 
 ```bash
 ./scripts/set-github-secrets.sh
 ```
 
-Lee los valores del archivo local y los sube uno por uno con `gh secret set`. No
-los imprime, así que no quedan en el historial de la terminal.
-
-Los dos que no están en `.env.local` van a mano:
-
-```bash
-gh secret set FIREBASE_PROJECT_ID
-```
+La cuenta de servicio va aparte, y se genera en Firebase Console →
+*Configuración del proyecto* → *Cuentas de servicio* → *Generar nueva clave
+privada*:
 
 ```bash
-gh secret set FIREBASE_SERVICE_ACCOUNT < service-account.json
+gh secret set FIREBASE_SERVICE_ACCOUNT --env production < service-account.json
 ```
 
-La cuenta de servicio se genera en Firebase Console → *Configuración del
-proyecto* → *Cuentas de servicio* → *Generar nueva clave privada*. Borra el JSON
-del disco después de subirlo.
+Borra el JSON del disco después de subirlo. Es la única credencial real del
+proyecto.
+
+#### Nota de nombres
+
+El secret se llama `VITE_MEASUREMENT_ID` pero la aplicación lee
+`VITE_FIREBASE_MEASUREMENT_ID`. El workflow hace el puente explícitamente en el
+paso de build. Renombrar el secret elimina esa línea y deja todo consistente con
+`.env.example`.
+
+#### Advertencia: `VITE_AUTH_USERNAME_DOMAIN`
+
+Si no se define, la app usa `classes.talendig.local`, y **las cuentas en Firebase
+Auth tienen que crearse con ese dominio exacto** (`yokasta.reyes@classes.talendig.local`).
+Si las creas con otro dominio, el login falla con «Usuario o contraseña
+incorrectos» sin ninguna pista de por qué. Define el secret o crea las cuentas
+con el valor por defecto — pero que coincidan.
 
 ### Activar el deploy automático
 
@@ -347,11 +373,12 @@ creación con validación inline y diálogo de eliminación.
 
 Pendiente antes de producción:
 
-- [ ] Crear el proyecto de Firebase y completar `.env.local`
-- [ ] Publicar el repositorio en GitHub y cargar los secrets
-      (`./scripts/set-github-secrets.sh`)
+- [x] Publicar el repositorio en GitHub
+- [x] Cargar la config de Firebase en el environment `production`
+- [ ] Agregar `FIREBASE_SERVICE_ACCOUNT` al environment `production`
 - [ ] Publicar reglas e índices de Firestore
 - [ ] Restringir la API key web a los dominios de Talendig
-- [ ] Crear las cuentas de los profesores en Firebase Auth
+- [ ] Crear las cuentas de los profesores en Firebase Auth, con el dominio que
+      coincida con `VITE_AUTH_USERNAME_DOMAIN`
 - [ ] Cargar el histórico de clases existente
-- [ ] Cambiar `deploy.yml` a disparo por push cuando el hosting esté listo
+- [ ] Correr el deploy manual una vez y luego cambiar `deploy.yml` a disparo por push

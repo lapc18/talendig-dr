@@ -1,14 +1,12 @@
 # Builds a deployable bundle and publishes it to Firebase Hosting.
 #
 # Manual on purpose (`workflow_dispatch`): change the trigger to `push` on
-# `main` once the Firebase project exists and the secrets below are set.
+# `main` once the deployment has been exercised by hand at least once.
 #
-# Required repository secrets:
-#   VITE_FIREBASE_*            — inlined into the bundle at build time
-#   FIREBASE_PROJECT_ID        — deploy target
-#   FIREBASE_SERVICE_ACCOUNT   — JSON key with the Hosting deploy role.
-#                                This one is genuinely secret; the VITE_ values
-#                                are not (see README).
+# Configuration comes from the `production` environment, not from repository
+# secrets, so the values are scoped to deployments and GitHub records a
+# deployment history. Adding required reviewers to that environment is enough to
+# gate releases — no workflow change needed.
 name: Deploy
 
 on:
@@ -23,6 +21,10 @@ jobs:
     name: Build and deploy to Firebase Hosting
     runs-on: ubuntu-latest
 
+    environment:
+      name: production
+      url: ${{ steps.hosting.outputs.details_url }}
+
     steps:
       - uses: actions/checkout@v7
 
@@ -36,30 +38,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # A missing variable would produce a bundle that throws on load and shows
-      # a blank page, so the run stops here instead of shipping one.
+      # A missing value would produce a bundle that throws on load and shows a
+      # blank page, so the run stops here rather than shipping one.
       - name: Verify the build configuration is complete
         env:
-          REQUIRED: >-
-            VITE_FIREBASE_API_KEY
-            VITE_FIREBASE_AUTH_DOMAIN
-            VITE_FIREBASE_PROJECT_ID
-            VITE_FIREBASE_STORAGE_BUCKET
-            VITE_FIREBASE_MESSAGING_SENDER_ID
-            VITE_FIREBASE_APP_ID
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           missing=""
-          for name in $REQUIRED; do
+          for name in \
+            VITE_FIREBASE_API_KEY \
+            VITE_FIREBASE_AUTH_DOMAIN \
+            VITE_FIREBASE_PROJECT_ID \
+            VITE_FIREBASE_STORAGE_BUCKET \
+            VITE_FIREBASE_MESSAGING_SENDER_ID \
+            VITE_FIREBASE_APP_ID \
+            FIREBASE_SERVICE_ACCOUNT
+          do
             [ -n "${!name}" ] || missing="$missing $name"
           done
           if [ -n "$missing" ]; then
-            echo "::error::Missing repository secrets:$missing"
+            echo "::error::Missing secrets in the 'production' environment:$missing"
             exit 1
           fi
 
@@ -71,14 +75,22 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          # The secret is named VITE_MEASUREMENT_ID in the environment; the
+          # application reads VITE_FIREBASE_MEASUREMENT_ID. Renaming the secret
+          # would remove the need for this line.
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_MEASUREMENT_ID }}
+          # Optional. Unset, the application falls back to
+          # `classes.talendig.local`, which is the domain the Firebase Auth
+          # accounts must then be created with.
           VITE_AUTH_USERNAME_DOMAIN: ${{ secrets.VITE_AUTH_USERNAME_DOMAIN }}
         run: pnpm build
 
       - name: Deploy
+        id: hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          # The Hosting target is the same project the client talks to.
+          projectId: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           channelId: live
