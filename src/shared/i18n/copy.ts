@@ -156,6 +156,10 @@ export const COPY = {
     boundaryBody:
       "Recarga la página para continuar. Si el problema sigue, escribe a soporte.",
     reload: "Recargar",
+    staleDeploymentTitle: "Hay una versión nueva disponible",
+    staleDeploymentBody:
+      "La aplicación se actualizó mientras la tenías abierta. Recarga para continuar con la versión más reciente.",
+    goHome: "Ir a la consulta",
   },
 
   notFound: {

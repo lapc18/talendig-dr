@@ -12,6 +12,7 @@ import {
   PublicSearchPage,
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { ROUTES } from "./routes";
 
 /**
@@ -35,31 +36,38 @@ function withSuspense(page: ReactNode): ReactNode {
 
 /** The application router. */
 export const router = createBrowserRouter([
-  { path: ROUTES.publicSearch, element: withSuspense(<PublicSearchPage />) },
-  { path: ROUTES.login, element: withSuspense(<LoginPage />) },
   {
-    path: ROUTES.admin,
-    element: withSuspense(
-      <ProtectedRoute>
-        <AdminDashboardPage />
-      </ProtectedRoute>,
-    ),
+    // A pathless parent exists only to give every route below it the same
+    // error screen; without one, RouterProvider renders its own.
+    errorElement: <RouteErrorBoundary />,
+    children: [
+      { path: ROUTES.publicSearch, element: withSuspense(<PublicSearchPage />) },
+      { path: ROUTES.login, element: withSuspense(<LoginPage />) },
+      {
+        path: ROUTES.admin,
+        element: withSuspense(
+          <ProtectedRoute>
+            <AdminDashboardPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: ROUTES.adminNewClass,
+        element: withSuspense(
+          <ProtectedRoute>
+            <ClassFormPage />
+          </ProtectedRoute>,
+        ),
+      },
+      {
+        path: ROUTES.adminEditClass,
+        element: withSuspense(
+          <ProtectedRoute>
+            <ClassFormPage />
+          </ProtectedRoute>,
+        ),
+      },
+      { path: "*", element: withSuspense(<NotFoundPage />) },
+    ],
   },
-  {
-    path: ROUTES.adminNewClass,
-    element: withSuspense(
-      <ProtectedRoute>
-        <ClassFormPage />
-      </ProtectedRoute>,
-    ),
-  },
-  {
-    path: ROUTES.adminEditClass,
-    element: withSuspense(
-      <ProtectedRoute>
-        <ClassFormPage />
-      </ProtectedRoute>,
-    ),
-  },
-  { path: "*", element: withSuspense(<NotFoundPage />) },
 ]);
