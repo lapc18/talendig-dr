@@ -55,75 +55,82 @@ export function PublicSearchPage() {
     <div className="min-h-dvh bg-ink-100">
       <PublicHeader />
 
-      <main className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-10">
-        <section className="bg-gradient-to-b from-navy-50 to-white pt-10 pb-6">
-          <h1 className="mb-1.5 font-sans text-h1 text-navy-900">
-            {COPY.publicSearch.title}
-          </h1>
-          <p className="mb-5 font-sans text-body text-ink-600">
-            {COPY.publicSearch.subtitle}
-          </p>
+      {/*
+        Full-bleed: the wash has to reach both edges of the viewport, and end in
+        the page colour. Confined to the content column and fading to white it
+        read as a floating slab with hard edges against the grey page.
+      */}
+      <section className="bg-gradient-to-b from-navy-50 to-ink-100">
+        <div className="mx-auto max-w-[1440px] px-5 pt-10 pb-8 sm:px-10">
+            <h1 className="mb-1.5 font-sans text-h1 text-navy-900">
+              {COPY.publicSearch.title}
+            </h1>
+            <p className="mb-5 font-sans text-body text-ink-600">
+              {COPY.publicSearch.subtitle}
+            </p>
 
-          <div className="flex gap-3">
-            <SearchInput
-              size="lg"
-              label={COPY.publicSearch.searchPlaceholder}
-              placeholder={COPY.publicSearch.searchPlaceholder}
-              value={search.filters.searchTerm}
-              onChange={(event) => {
-                search.setFilters({ searchTerm: event.target.value });
-              }}
-              className="flex-1"
-            />
+            <div className="flex gap-3">
+              <SearchInput
+                size="lg"
+                label={COPY.publicSearch.searchPlaceholder}
+                placeholder={COPY.publicSearch.searchPlaceholder}
+                value={search.filters.searchTerm}
+                onChange={(event) => {
+                  search.setFilters({ searchTerm: event.target.value });
+                }}
+                className="flex-1"
+              />
 
-            <Button
-              size="lg"
-              className="hidden shrink-0 lg:inline-flex"
-              onClick={() => {
-                search.retry();
-              }}
-            >
-              {COPY.actions.search}
-            </Button>
+              <Button
+                size="lg"
+                className="hidden shrink-0 lg:inline-flex"
+                onClick={() => {
+                  search.retry();
+                }}
+              >
+                {COPY.actions.search}
+              </Button>
 
-            <Button
-              size="lg"
-              className="shrink-0 lg:hidden"
-              onClick={() => {
-                setIsFilterSheetOpen(true);
-              }}
-            >
-              <SlidersHorizontal size={16} aria-hidden="true" />
-              {search.activeFilterCount > 0
-                ? `${COPY.actions.filters} · ${String(search.activeFilterCount)}`
-                : COPY.actions.filters}
-            </Button>
-          </div>
+              <Button
+                size="lg"
+                className="shrink-0 lg:hidden"
+                onClick={() => {
+                  setIsFilterSheetOpen(true);
+                }}
+              >
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                {search.activeFilterCount > 0
+                  ? `${COPY.actions.filters} · ${String(search.activeFilterCount)}`
+                  : COPY.actions.filters}
+              </Button>
+            </div>
 
-          <div className="mt-3.5 hidden items-end gap-3 lg:flex">
-            <ClassFilterFields
+            <div className="mt-3.5 hidden items-end gap-3 lg:flex">
+              <ClassFilterFields
+                filters={search.filters}
+                teachers={teachers}
+                codes={codes}
+                onChange={search.setFilters}
+              />
+              <Button
+                variant="secondary"
+                className="h-11 shrink-0"
+                onClick={search.clearFilters}
+                disabled={search.activeFilterCount === 0}
+              >
+                {COPY.actions.clearFilters}
+              </Button>
+            </div>
+
+            <ActiveFilterChips
               filters={search.filters}
-              teachers={teachers}
-              codes={codes}
               onChange={search.setFilters}
             />
-            <Button
-              variant="secondary"
-              className="h-11 shrink-0"
-              onClick={search.clearFilters}
-              disabled={search.activeFilterCount === 0}
-            >
-              {COPY.actions.clearFilters}
-            </Button>
-          </div>
+        </div>
+      </section>
 
-          <ActiveFilterChips
-            filters={search.filters}
-            onChange={search.setFilters}
-          />
-        </section>
-
-        <section className="pt-2">
+      <main className="mx-auto max-w-[1440px] px-5 pt-6 pb-16 sm:px-10">
+        <section>
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
             <h2
               aria-live="polite"

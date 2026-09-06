@@ -24,7 +24,7 @@ export interface ClassResultCardProps {
  */
 export function ClassResultCard({ record, onSelect }: ClassResultCardProps) {
   return (
-    <article className="rounded-card border border-ink-100 bg-white p-3.5 shadow-row">
+    <article className="rounded-card border border-navy-900/9 bg-white p-3.5 shadow-row">
       <button
         type="button"
         onClick={() => {

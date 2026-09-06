@@ -28,7 +28,7 @@ export function ClassResultsTable({
   onSelect,
 }: ClassResultsTableProps) {
   return (
-    <div className="overflow-hidden rounded-card border border-ink-100">
+    <div className="overflow-hidden rounded-card border border-navy-900/9 bg-white shadow-row">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="bg-navy-50">
