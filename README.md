@@ -180,7 +180,7 @@ workflow.
 | `VITE_FIREBASE_STORAGE_BUCKET` | ✅ | |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | ✅ | |
 | `VITE_FIREBASE_APP_ID` | ✅ | |
-| `VITE_FIREBASE_MEASUREMENT_ID` | ❌ falta | Opcional: sin él Analytics queda apagado |
+| `VITE_FIREBASE_MEASUREMENT_ID` | ✅ | Opcional: sin él Analytics queda apagado |
 | `VITE_AUTH_USERNAME_DOMAIN` | ✅ | Ver la advertencia abajo |
 | `FIREBASE_SERVICE_ACCOUNT` | ❌ falta | Sin esto el deploy no corre |
 

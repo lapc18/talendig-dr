@@ -63,15 +63,17 @@ jobs:
           do
             [ -n "${!name}" ] || missing="$missing $name"
           done
+          # Analytics is optional by design, so this is a warning rather than a
+          # failure — but shipping with it silently off should still be visible.
+          # Reported before the exit below, so one run lists everything that is
+          # wrong instead of surfacing the next problem only after a fix.
+          if [ -z "$VITE_FIREBASE_MEASUREMENT_ID" ]; then
+            echo "::warning::VITE_FIREBASE_MEASUREMENT_ID is not set; Analytics will be disabled in this build."
+          fi
+
           if [ -n "$missing" ]; then
             echo "::error::Missing secrets in the 'production' environment:$missing"
             exit 1
-          fi
-
-          # Analytics is optional by design, so this is a warning rather than a
-          # failure — but shipping with it silently off should still be visible.
-          if [ -z "$VITE_FIREBASE_MEASUREMENT_ID" ]; then
-            echo "::warning::VITE_FIREBASE_MEASUREMENT_ID is not set; Analytics will be disabled in this build."
           fi
 
       - name: Build
