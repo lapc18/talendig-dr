@@ -180,8 +180,8 @@ workflow.
 | `VITE_FIREBASE_STORAGE_BUCKET` | ✅ | |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | ✅ | |
 | `VITE_FIREBASE_APP_ID` | ✅ | |
-| `VITE_MEASUREMENT_ID` | ✅ | Ver la nota de nombres abajo |
-| `VITE_AUTH_USERNAME_DOMAIN` | ⚠️ sin definir | Ver la advertencia abajo |
+| `VITE_FIREBASE_MEASUREMENT_ID` | ❌ falta | Opcional: sin él Analytics queda apagado |
+| `VITE_AUTH_USERNAME_DOMAIN` | ✅ | Ver la advertencia abajo |
 | `FIREBASE_SERVICE_ACCOUNT` | ❌ falta | Sin esto el deploy no corre |
 
 Para cargarlos desde tu `.env.local`:
@@ -201,20 +201,31 @@ gh secret set FIREBASE_SERVICE_ACCOUNT --env production < service-account.json
 Borra el JSON del disco después de subirlo. Es la única credencial real del
 proyecto.
 
-#### Nota de nombres
+#### Renombrar un secret
 
-El secret se llama `VITE_MEASUREMENT_ID` pero la aplicación lee
-`VITE_FIREBASE_MEASUREMENT_ID`. El workflow hace el puente explícitamente en el
-paso de build. Renombrar el secret elimina esa línea y deja todo consistente con
-`.env.example`.
+La UI de GitHub **no renombra**: el lápiz solo cambia el valor. Renombrar es
+borrar y volver a crear, y como los secrets son de solo escritura, hay que tener
+el valor original a mano. Si el nuevo no llega a guardarse, el valor se pierde
+del repositorio y hay que sacarlo otra vez de su origen.
 
 #### Advertencia: `VITE_AUTH_USERNAME_DOMAIN`
 
-Si no se define, la app usa `classes.talendig.local`, y **las cuentas en Firebase
-Auth tienen que crearse con ese dominio exacto** (`yokasta.reyes@classes.talendig.local`).
-Si las creas con otro dominio, el login falla con «Usuario o contraseña
-incorrectos» sin ninguna pista de por qué. Define el secret o crea las cuentas
-con el valor por defecto — pero que coincidan.
+Firebase Auth no tiene proveedor de usuario/contraseña, solo email/contraseña.
+Como los profesores entran con un usuario simple, el servicio le pega este
+dominio para armar la credencial que Firebase espera:
+
+```
+yokasta.reyes  →  yokasta.reyes@<VITE_AUTH_USERNAME_DOMAIN>
+```
+
+El dominio nunca tiene que resolver ni recibir correo; es solo un espacio de
+nombres para cumplir con el formato de email. Sin el secret, la app usa
+`classes.talendig.local`.
+
+**Las cuentas en Firebase Auth tienen que crearse con exactamente ese dominio.**
+Si el secret dice `classes.talendig.local` pero creas
+`yokasta.reyes@talendig.com` en la consola, el login falla con «Usuario o
+contraseña incorrectos» y no hay ninguna pista de por qué.
 
 ### Activar el deploy automático
 
