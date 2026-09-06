@@ -91,6 +91,9 @@ Colección única `classes`. Cada documento:
 | `createdAt` / `updatedAt` | `Timestamp` | |
 | `updatedBy` | `string` | Usuario que guardó por última vez |
 
+La base de datos vive en **`us-east1`** (Carolina del Sur), en modo Native. La
+ubicación de Firestore es permanente: cambiarla exige crear otro proyecto.
+
 Publica las reglas y los índices:
 
 ```bash
@@ -398,10 +401,11 @@ Pendiente antes de producción:
 - [x] Cargar la config de Firebase en el environment `production`
 - [x] Crear la cuenta de servicio y su llave (`FIREBASE_SERVICE_ACCOUNT`)
 - [x] Desplegar a Firebase Hosting — **https://talendig-dr.web.app**
-- [ ] Habilitar Firestore y crear la base de datos (la ubicación es permanente)
-- [ ] Publicar reglas e índices de Firestore
-- [ ] Restringir la API key web a los dominios de Talendig
-- [ ] Crear las cuentas de los profesores en Firebase Auth, con el dominio que
-      coincida con `VITE_AUTH_USERNAME_DOMAIN`
+- [x] Crear la base de datos de Firestore (`us-east1`, Native mode)
+- [x] Publicar reglas e índices de Firestore
+- [ ] Restringir la API key web a `talendig-dr.web.app` y a los dominios de
+      Talendig, en Google Cloud Console → *Credentials*
+- [ ] Crear las cuentas de los profesores en Firebase Auth, como
+      `usuario@classes.talendig.local` (habilitar el proveedor Email/Password)
 - [ ] Cargar el histórico de clases existente
 - [ ] Cambiar `deploy.yml` a disparo por push en `main`
