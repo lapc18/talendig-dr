@@ -223,7 +223,9 @@ export function PublicSearchPage() {
         <Button
           size="lg"
           isFullWidth
-          className="mt-5"
+          // Sticky rather than merely last: on a short viewport the filters
+          // scroll, and the action has to stay on screen.
+          className="sticky bottom-0 mt-5"
           onClick={() => {
             setIsFilterSheetOpen(false);
             trackEvent(ANALYTICS_EVENTS.filtersApplied, {

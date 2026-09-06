@@ -38,6 +38,10 @@ export function Dialog({
       className={cn(
         "m-auto w-[480px] max-w-[calc(100vw-2rem)] rounded-dialog bg-white p-7",
         "shadow-dialog backdrop:bg-navy-900/42",
+        // A phone in landscape leaves ~375px of height. Without an explicit
+        // bound and a scroll region, content taller than that pushes the
+        // primary action out of reach.
+        "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         className,
       )}
     >

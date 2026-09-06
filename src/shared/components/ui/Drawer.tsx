@@ -8,6 +8,7 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { COPY } from "@/shared/i18n/copy";
+import { cn } from "@/shared/utils/cn";
 import { useModalDialog } from "@/shared/hooks/useModalDialog";
 
 /** Props for {@link Drawer}. */
@@ -44,11 +45,22 @@ export function Drawer({
     <dialog
       ref={dialogRef}
       aria-label={title}
-      className="mt-0 mr-0 mb-0 ml-auto h-dvh max-h-dvh w-[520px] max-w-full bg-white shadow-panel backdrop:bg-navy-900/42 sm:rounded-none"
+      className={cn(
+        "m-0 w-full max-w-full bg-white shadow-panel backdrop:bg-navy-900/42",
+        // Below `sm` the panel becomes a bottom sheet, which is how a
+        // one-handed reader expects to dismiss it; from `sm` up it is the
+        // full-height side panel the design specifies.
+        "mt-auto max-h-[88dvh] rounded-t-2xl",
+        "sm:mt-0 sm:mr-0 sm:ml-auto sm:h-dvh sm:max-h-dvh sm:w-[520px] sm:rounded-none",
+      )}
     >
       {isOpen ? (
-        <div className="flex h-full flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-ink-100 px-7 py-6">
+        <div className="flex max-h-[88dvh] flex-col sm:max-h-none sm:h-full">
+          <div
+            aria-hidden="true"
+            className="mx-auto mt-3 h-1 w-11 shrink-0 rounded-full bg-ink-200 sm:hidden"
+          />
+          <div className="flex items-start justify-between gap-4 border-b border-ink-100 px-5 py-5 sm:px-7 sm:py-6">
             {header}
             <button
               type="button"
@@ -60,12 +72,12 @@ export function Drawer({
             </button>
           </div>
 
-          <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-7 py-6">
+          <div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain px-5 py-6 sm:px-7">
             {children}
           </div>
 
           {footer !== undefined && (
-            <div className="flex gap-2.5 border-t border-ink-100 px-7 py-5">
+            <div className="flex shrink-0 gap-2.5 border-t border-ink-100 px-5 py-4 sm:px-7 sm:py-5">
               {footer}
             </div>
           )}
