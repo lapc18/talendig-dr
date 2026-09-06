@@ -97,6 +97,24 @@ gh secret set FIREBASE_SERVICE_ACCOUNT --env "$GH_ENVIRONMENT" < "$KEY_FILE"
 echo
 echo "Done. The key file has been overwritten and deleted."
 echo
-echo "Keys issued for this service account (revoke any you do not recognise):"
-gcloud iam service-accounts keys list --iam-account="$SA_EMAIL" --project="$PROJECT_ID" \
-  --format="table(name.basename(), validAfterTime)" 2>/dev/null || true
+
+# Only user-managed keys are downloadable credentials worth auditing; the
+# system-managed ones belong to Google and cannot be exported. Listing both
+# together would bury the ones that actually matter.
+#
+# Key creation is eventually consistent, so the list is retried until the new
+# key shows up rather than printing an inventory that omits it.
+echo "Downloadable keys on this service account (revoke any you do not recognise):"
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  keys="$(gcloud iam service-accounts keys list \
+    --iam-account="$SA_EMAIL" --project="$PROJECT_ID" \
+    --managed-by=user \
+    --format="table(name.basename(), validAfterTime)" 2>/dev/null || true)"
+  [ "$(printf '%s\n' "$keys" | wc -l)" -gt 1 ] && break
+  sleep 1
+done
+printf '%s\n' "$keys"
+
+echo
+echo "Revoke an old one with:"
+echo "  gcloud iam service-accounts keys delete <KEY_ID> --iam-account=$SA_EMAIL --project=$PROJECT_ID"
