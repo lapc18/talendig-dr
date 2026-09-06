@@ -2,6 +2,8 @@
 
 Registro y consulta del histórico de clases de Talendig.
 
+**Producción:** https://talendig-dr.web.app
+
 Dos superficies sobre la misma base de datos:
 
 - **Consulta pública** (`/`) — abierta, sin autenticación. Estudiantes y
@@ -394,10 +396,12 @@ Pendiente antes de producción:
 
 - [x] Publicar el repositorio en GitHub
 - [x] Cargar la config de Firebase en el environment `production`
-- [ ] Agregar `FIREBASE_SERVICE_ACCOUNT` al environment `production`
+- [x] Crear la cuenta de servicio y su llave (`FIREBASE_SERVICE_ACCOUNT`)
+- [x] Desplegar a Firebase Hosting — **https://talendig-dr.web.app**
+- [ ] Habilitar Firestore y crear la base de datos (la ubicación es permanente)
 - [ ] Publicar reglas e índices de Firestore
 - [ ] Restringir la API key web a los dominios de Talendig
 - [ ] Crear las cuentas de los profesores en Firebase Auth, con el dominio que
       coincida con `VITE_AUTH_USERNAME_DOMAIN`
 - [ ] Cargar el histórico de clases existente
-- [ ] Correr el deploy manual una vez y luego cambiar `deploy.yml` a disparo por push
+- [ ] Cambiar `deploy.yml` a disparo por push en `main`
