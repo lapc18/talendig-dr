@@ -48,7 +48,8 @@ pnpm dev
 | `pnpm test` | Suite de pruebas (Vitest) |
 | `pnpm test:watch` | Pruebas en modo watch |
 | `pnpm test:coverage` | Pruebas con reporte de cobertura |
-| `./scripts/set-github-secrets.sh` | Sube las variables de `.env.local` a GitHub Secrets |
+| `./scripts/set-github-secrets.sh` | Sube las variables de `.env.local` al environment de GitHub |
+| `./scripts/create-deploy-service-account.sh` | Crea la cuenta de servicio de deploy y guarda su llave |
 
 ### Variables de entorno
 
@@ -190,16 +191,23 @@ Para cargarlos desde tu `.env.local`:
 ./scripts/set-github-secrets.sh
 ```
 
-La cuenta de servicio va aparte, y se genera en Firebase Console →
-*Configuración del proyecto* → *Cuentas de servicio* → *Generar nueva clave
-privada*:
+La cuenta de servicio va aparte. Es la única credencial real del proyecto, así
+que tiene su propio script:
 
 ```bash
-gh secret set FIREBASE_SERVICE_ACCOUNT --env production < service-account.json
+gcloud auth login
+./scripts/create-deploy-service-account.sh talendig-dr
 ```
 
-Borra el JSON del disco después de subirlo. Es la única credencial real del
-proyecto.
+Crea la cuenta `github-deploy@talendig-dr.iam.gserviceaccount.com`, le da
+`roles/firebasehosting.admin` y `roles/firebase.viewer` —nada más—, emite una
+llave y la guarda como `FIREBASE_SERVICE_ACCOUNT` en el environment. La llave
+nunca se imprime: va a un archivo `chmod 600`, se canaliza a `gh`, y un `trap`
+la sobrescribe y la borra en cualquier salida, incluida una interrupción.
+
+Es idempotente: volver a correrlo salta lo que ya existe y emite una llave
+nueva, que es también como se rota. Al final lista las llaves vivas de esa
+cuenta para que revoques cualquiera que no reconozcas.
 
 #### Renombrar un secret
 
