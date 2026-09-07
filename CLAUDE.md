@@ -271,3 +271,27 @@ A change is done when all of these hold:
 - [ ] `docs/` reflects the change — see the table in §10; every link resolves.
 - [ ] The UI matches `docs/design/talendig-classes-record.dc.html` — tokens from
       `src/styles/tokens.css`, never hardcoded hex values in components.
+- [ ] The commit message carries no `Co-Authored-By` trailer and no tool
+      attribution of any kind — see §13.
+
+---
+
+## 13. Attribution
+
+- **Never write a `Co-Authored-By` trailer.** Not for Claude, not for any other
+  assistant or tool, not for anyone who did not ask to be there. The author of a
+  commit is whoever ran it; the trailer is the only thing that would claim
+  otherwise, so it never gets written.
+- **No tool attribution anywhere.** No `Generated with`, no `🤖`, no assistant
+  name, model id or product link — not in a commit message, a tag, a PR title or
+  body, an issue, a code comment, a changelog entry, a document, or any file
+  this repository ships.
+- **The rule has no exception and no opt-in.** A commit that carries attribution
+  is rewritten before it is pushed, not left for later. If a tool adds the
+  trailer by default, the default is wrong here — strip it.
+
+```
+# BAD — never, in any commit
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+🤖 Generated with Claude Code
+```
