@@ -31,30 +31,27 @@ export function useClassFacets(): ClassFacets {
   useEffect(() => {
     let isActive = true;
 
-    void Promise.all([
-      repository.listTeachers(),
-      repository.listCodes(),
-    ]).then(([teacherResult, codeResult]) => {
-      if (!isActive) return;
+    void repository
+      .listFacets()
+      .then((result) => {
+        if (!isActive) return;
 
-      if (teacherResult.ok) {
-        setTeachers(teacherResult.value);
-      } else {
-        logger.warn("Teacher filter options unavailable", {
-          code: teacherResult.error.code,
-        });
-      }
+        if (result.ok) {
+          setTeachers(result.value.teachers);
+          setCodes(result.value.codes);
+        } else {
+          logger.warn("Filter options unavailable", { code: result.error.code });
+        }
 
-      if (codeResult.ok) {
-        setCodes(codeResult.value);
-      } else {
-        logger.warn("Class code filter options unavailable", {
-          code: codeResult.error.code,
-        });
-      }
-
-      setIsLoading(false);
-    });
+        setIsLoading(false);
+      })
+      .catch((cause: unknown) => {
+        // Filter options are a convenience, so a throw degrades to empty
+        // dropdowns rather than leaving the hook stuck on `isLoading`.
+        if (!isActive) return;
+        logger.error("Filter options threw instead of failing", cause);
+        setIsLoading(false);
+      });
 
     return () => {
       isActive = false;

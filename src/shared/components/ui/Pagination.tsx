@@ -51,7 +51,7 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Paginación"
+      aria-label={COPY.publicSearch.paginationLabel}
       className="flex flex-wrap items-center justify-between gap-3"
     >
       <span className="font-sans text-[13px] text-ink-600">

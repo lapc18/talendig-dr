@@ -10,7 +10,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENTS, trackEvent } from "@/shared/lib/analytics";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
-import type { AppError } from "@/shared/lib/errors";
+import { createAppError, type AppError } from "@/shared/lib/errors";
+import { logger } from "@/shared/lib/logger";
+import { COPY } from "@/shared/i18n/copy";
 import { useClassRepository } from "../context/classRepositoryContext";
 import {
   EMPTY_CLASS_FILTERS,
@@ -30,13 +32,23 @@ const NO_RECORDS: readonly ClassRecord[] = [];
 /** Lifecycle of the class list. */
 export type ClassSearchStatus = "loading" | "success" | "error";
 
-/** The outcome of one completed request, tagged with the request it answers. */
+/** The outcome of one completed page request, tagged with the request it answers. */
 interface LoadedPage {
   /** Identifies the request; a mismatch with the current one means stale. */
   readonly requestKey: string;
   readonly items: readonly ClassRecord[];
-  readonly totalItems: number;
   readonly error: AppError | null;
+}
+
+/**
+ * The outcome of one completed count, tagged with the query it answers.
+ *
+ * Kept apart from the page so that paging reuses it: the total depends on the
+ * filters and the sort order, never on which page is being shown.
+ */
+interface LoadedCount {
+  readonly countKey: string;
+  readonly total: number;
 }
 
 /** Everything {@link useClassSearch} exposes. */
@@ -89,6 +101,7 @@ export function useClassSearch({
   const [page, setPage] = useState(1);
   const [retryToken, setRetryToken] = useState(0);
   const [loaded, setLoaded] = useState<LoadedPage | null>(null);
+  const [counted, setCounted] = useState<LoadedCount | null>(null);
 
   /** `cursors[n]` starts page `n + 1`; page 1 always starts at `null`. */
   const [cursors, setCursors] = useState<(ClassPageCursor | null)[]>([null]);
@@ -142,10 +155,13 @@ export function useClassSearch({
   /** Cursor that starts the page being requested. */
   const cursor = cursors[page - 1] ?? null;
 
-  /** Identifies the request the current render expects an answer for. */
+  /** Identifies the page the current render expects an answer for. */
   const requestKey = `${querySignature}|${String(page)}|${String(retryToken)}`;
 
-  /** Latest request in flight, so a slow earlier response is ignored. */
+  /** Identifies the result set being counted. Deliberately excludes the page. */
+  const countKey = `${querySignature}|${String(retryToken)}`;
+
+  /** Latest page request in flight, so a slow earlier response is ignored. */
   const latestRequestKeyRef = useRef(requestKey);
 
   useEffect(() => {
@@ -153,58 +169,94 @@ export function useClassSearch({
 
     const request = { filters: effectiveFilters, sortOrder, pageSize, cursor };
 
-    void Promise.all([
-      repository.findPage(request),
-      repository.countAll(request),
-    ]).then(([pageResult, countResult]) => {
-      // A newer query started while this one was in flight; drop the result.
-      if (latestRequestKeyRef.current !== requestKey) return;
+    void repository
+      .findPage(request)
+      .then((pageResult) => {
+        // A newer query started while this one was in flight; drop the result.
+        if (latestRequestKeyRef.current !== requestKey) return;
 
-      if (!pageResult.ok) {
+        if (!pageResult.ok) {
+          setLoaded({ requestKey, items: NO_RECORDS, error: pageResult.error });
+          trackEvent(ANALYTICS_EVENTS.errorStateShown, {
+            surface,
+            error_code: pageResult.error.code,
+          });
+          return;
+        }
+
+        const { items, nextCursor } = pageResult.value;
+
+        // Extend the cursor trail only when this page is the furthest reached,
+        // so navigating backwards never truncates or duplicates it.
+        if (nextCursor !== null) {
+          setCursors((current) =>
+            current.length === page ? [...current, nextCursor] : current,
+          );
+        }
+
+        setLoaded({ requestKey, items, error: null });
+      })
+      .catch((cause: unknown) => {
+        // A repository is contracted to return failures, not throw them. One
+        // that throws anyway would otherwise leave the list on the skeleton
+        // forever, with no error state and no way to retry.
+        if (latestRequestKeyRef.current !== requestKey) return;
+
+        logger.error("The class repository threw instead of failing", cause);
         setLoaded({
           requestKey,
           items: NO_RECORDS,
-          totalItems: 0,
-          error: pageResult.error,
+          error: createAppError("classes/unknown", COPY.errors.unexpected, cause),
         });
-        trackEvent(ANALYTICS_EVENTS.errorStateShown, {
-          surface,
-          error_code: pageResult.error.code,
-        });
-        return;
-      }
+      });
+  }, [repository, requestKey, effectiveFilters, sortOrder, pageSize, cursor, page, surface]);
 
-      const { items, nextCursor } = pageResult.value;
+  // Counting is its own effect keyed without the page, so paging through one
+  // result set no longer re-runs a server-side aggregation per page.
+  useEffect(() => {
+    const request = {
+      filters: effectiveFilters,
+      sortOrder,
+      pageSize,
+      cursor: null,
+    };
 
-      // Extend the cursor trail only when this page is the furthest reached,
-      // so navigating backwards never truncates or duplicates it.
-      if (nextCursor !== null) {
-        setCursors((current) =>
-          current.length === page ? [...current, nextCursor] : current,
-        );
-      }
+    let isCurrent = true;
 
-      // A failed count must not fail the page: the list still renders, it just
-      // falls back to the number of rows it actually has.
-      const totalItems = countResult.ok ? countResult.value : items.length;
-      setLoaded({ requestKey, items, totalItems, error: null });
-
+    /**
+     * Records the search once the size of the result set is known.
+     *
+     * @param resultCount - How many classes the query matched.
+     */
+    const reportSearch = (resultCount: number): void => {
       trackEvent(ANALYTICS_EVENTS.searchPerformed, {
         query_length: effectiveFilters.searchTerm.length,
-        result_count: totalItems,
+        result_count: resultCount,
         has_filters: countActiveFilters(effectiveFilters) > 0,
       });
-    });
-  }, [
-    repository,
-    requestKey,
-    effectiveFilters,
-    sortOrder,
-    pageSize,
-    cursor,
-    page,
-    surface,
-  ]);
+    };
+
+    void repository
+      .countAll(request)
+      .then((countResult) => {
+        if (!isCurrent) return;
+
+        // A failed count must not fail the list: the page still renders and
+        // falls back to the number of rows it actually has.
+        if (!countResult.ok) return;
+
+        setCounted({ countKey, total: countResult.value });
+        reportSearch(countResult.value);
+      })
+      .catch((cause: unknown) => {
+        if (!isCurrent) return;
+        logger.warn("The class count threw instead of failing", { cause });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [repository, countKey, effectiveFilters, sortOrder, pageSize]);
 
   const setFilters = useCallback((update: Partial<ClassFilters>): void => {
     setFiltersState((current) => ({ ...current, ...update }));
@@ -242,7 +294,12 @@ export function useClassSearch({
       : "success";
 
   const items = isCurrent ? loaded.items : NO_RECORDS;
-  const totalItems = isCurrent ? loaded.totalItems : 0;
+
+  // The count answers the query, not the page, so it survives paging. Until it
+  // lands the page's own length stands in, which is exact whenever everything
+  // fits on one page.
+  const isCountCurrent = counted !== null && counted.countKey === countKey;
+  const totalItems = isCountCurrent ? counted.total : items.length;
 
   return {
     items,

@@ -103,3 +103,30 @@ export function toSearchKeyword(searchTerm: string): string | null {
 
   return longest.slice(0, MAX_PREFIX_LENGTH);
 }
+
+/**
+ * Returns the search words that {@link toSearchKeyword} could not send to
+ * Firestore.
+ *
+ * Firestore allows one `array-contains` per query, so only the most selective
+ * word reaches the server. Without these the rest of what the reader typed
+ * would be silently ignored.
+ *
+ * @param searchTerm - Raw text typed by the user.
+ * @returns The normalised words that still have to be applied.
+ */
+export function toResidualSearchTokens(searchTerm: string): readonly string[] {
+  const tokens = tokenize(searchTerm);
+  if (tokens.length <= 1) return [];
+
+  const sent = toSearchKeyword(searchTerm);
+  let isSentDropped = false;
+
+  return tokens.filter((token) => {
+    if (!isSentDropped && sent !== null && token.startsWith(sent)) {
+      isSentDropped = true;
+      return false;
+    }
+    return true;
+  });
+}

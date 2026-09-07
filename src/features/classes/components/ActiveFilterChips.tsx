@@ -107,7 +107,7 @@ export function ActiveFilterChips({
           onClick={() => {
             onChange(chip.reset);
           }}
-          aria-label={`Quitar filtro ${chip.label}`}
+          aria-label={COPY.publicSearch.removeFilter(chip.label)}
           className={cn(
             "inline-flex cursor-pointer items-center gap-[7px] rounded-full px-[11px] py-1.5",
             "font-sans text-xs leading-none font-semibold transition-colors",

@@ -59,6 +59,10 @@ export const COPY = {
     sortNewest: "Fecha (más reciente)",
     sortOldest: "Fecha (más antigua)",
     loading: "Cargando clases…",
+    resultsFound: (count: number): string =>
+      count === 1 ? "1 clase encontrada" : `${String(count)} clases encontradas`,
+    removeFilter: (label: string): string => `Quitar filtro ${label}`,
+    paginationLabel: "Paginación",
   },
 
   table: {
@@ -103,6 +107,9 @@ export const COPY = {
     searchPlaceholder: "Buscar clase, código o profesor",
     teacherFilterAll: "Profesor: todos",
     rowsPerPage: "Filas por página:",
+    lastUpdate: "última actualización",
+    classSingular: "clase",
+    classPlural: "clases",
   },
 
   form: {
@@ -124,6 +131,12 @@ export const COPY = {
     commentPlaceholder:
       "Notas de la sesión: temas cubiertos, pendientes, recomendaciones.",
     commentHelp: "Visible en el detalle público de la clase.",
+    fixFieldsToSave: (count: number): string =>
+      count === 1
+        ? "Corrige 1 campo para poder guardar."
+        : `Corrige ${String(count)} campos para poder guardar.`,
+    createdOn: "Creada el",
+    editedBy: "editada por",
   },
 
   validation: {
@@ -139,6 +152,11 @@ export const COPY = {
     commentTooLong: "El comentario no puede pasar de 600 caracteres.",
     usernameRequired: "Escribe tu usuario.",
     passwordRequired: "Escribe tu contraseña.",
+  },
+
+  support: {
+    /** Where the error states point a reader who is still stuck. */
+    email: "soporte@talendig.com",
   },
 
   errors: {

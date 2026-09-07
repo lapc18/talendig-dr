@@ -104,7 +104,7 @@ Fíjate que [`classRepository.ts`](../src/features/classes/services/classReposit
 declara **tres** interfaces, no una:
 
 ```ts
-export interface ClassReader { findPage, countAll, findById, listTeachers, listCodes }
+export interface ClassReader { findPage, countAll, findById, listFacets }
 export interface ClassWriter { create, update, remove }
 export interface ClassRepository extends ClassReader, ClassWriter {}
 ```

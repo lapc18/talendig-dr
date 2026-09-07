@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSearchKeywords,
   normalizeForSearch,
+  toResidualSearchTokens,
   toSearchKeyword,
 } from "./searchKeywords";
 import type { ClassDraft } from "../types";
@@ -109,5 +110,30 @@ describe("toSearchKeyword", () => {
 
     expect(keyword).not.toBeNull();
     expect(keywords).toContain(keyword);
+  });
+});
+
+describe("toResidualSearchTokens", () => {
+  it("returns nothing when the whole term fits in one keyword", () => {
+    expect(toResidualSearchTokens("react")).toEqual([]);
+    expect(toResidualSearchTokens("")).toEqual([]);
+  });
+
+  it("returns the words the server could not filter on", () => {
+    // "fundamentos" is the longest, so it is the one sent to Firestore.
+    expect(toResidualSearchTokens("fundamentos de react")).toEqual([
+      "de",
+      "react",
+    ]);
+  });
+
+  it("drops only one occurrence of the word that was sent", () => {
+    expect(toResidualSearchTokens("react react")).toEqual(["react"]);
+  });
+
+  it("normalises the residue the same way the index was built", () => {
+    expect(toResidualSearchTokens("investigacion Rosángela")).toEqual([
+      "rosangela",
+    ]);
   });
 });

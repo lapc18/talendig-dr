@@ -79,3 +79,16 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("es-DO", {
 export function formatTimeOfDay(date: Date): string {
   return TIME_FORMATTER.format(date);
 }
+
+/**
+ * Formats an instant as a Spanish date and time, e.g. `06 sep 2026, 8:15 p. m.`
+ *
+ * Unlike {@link formatShortDate}, which takes a calendar day, this takes a real
+ * timestamp — a record's `createdAt` or `updatedAt`.
+ *
+ * @param date - The instant to format.
+ * @returns The formatted date and time.
+ */
+export function formatDateTime(date: Date): string {
+  return `${format(date, "dd MMM yyyy", { locale: es })}, ${TIME_FORMATTER.format(date)}`;
+}

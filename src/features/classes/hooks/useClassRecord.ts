@@ -3,7 +3,9 @@
  */
 
 import { useEffect, useState } from "react";
-import type { AppError } from "@/shared/lib/errors";
+import { createAppError, type AppError } from "@/shared/lib/errors";
+import { logger } from "@/shared/lib/logger";
+import { COPY } from "@/shared/i18n/copy";
 import { useClassRepository } from "../context/classRepositoryContext";
 import type { ClassRecord } from "../types";
 
@@ -36,15 +38,27 @@ export function useClassRecord(classId: string | null): ClassRecordState {
 
     let isActive = true;
 
-    void repository.findById(classId).then((result) => {
-      if (!isActive) return;
+    void repository
+      .findById(classId)
+      .then((result) => {
+        if (!isActive) return;
 
-      setLoaded({
-        classId,
-        record: result.ok ? result.value : null,
-        error: result.ok ? null : result.error,
+        setLoaded({
+          classId,
+          record: result.ok ? result.value : null,
+          error: result.ok ? null : result.error,
+        });
+      })
+      .catch((cause: unknown) => {
+        // A throw would otherwise hold the form on its skeleton forever.
+        if (!isActive) return;
+        logger.error("Reading a class threw instead of failing", cause);
+        setLoaded({
+          classId,
+          record: null,
+          error: createAppError("classes/unknown", COPY.errors.unexpected, cause),
+        });
       });
-    });
 
     return () => {
       isActive = false;

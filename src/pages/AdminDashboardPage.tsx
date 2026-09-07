@@ -2,7 +2,7 @@
  * Administrative class list: search, page, edit and delete.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/app/routes";
 import { AdminClassTable } from "@/features/classes/components/AdminClassTable";
@@ -20,7 +20,7 @@ import { SearchInput } from "@/shared/components/ui/SearchInput";
 import { Select } from "@/shared/components/ui/Select";
 import { ClassListSkeleton } from "@/shared/components/ui/Skeleton";
 import { COPY } from "@/shared/i18n/copy";
-import { formatTimeOfDay } from "@/shared/utils/date";
+import { formatDateTime } from "@/shared/utils/date";
 
 /** Rows per page in the administrative list. */
 const PAGE_SIZE = 10;
@@ -36,6 +36,21 @@ export function AdminDashboardPage() {
   const { isDeleting, deleteClass } = useClassMutations();
 
   const [pendingDeletion, setPendingDeletion] = useState<ClassRecord | null>(null);
+
+  /**
+   * The most recent change among the classes on screen.
+   *
+   * Derived from the records rather than from the clock: reading `new Date()`
+   * during render claimed a freshness the app never checked, and made the
+   * displayed time jump on every keystroke in the search box.
+   */
+  const lastUpdatedAt = useMemo<Date | null>(() => {
+    if (search.items.length === 0) return null;
+    const newest = Math.max(
+      ...search.items.map((record) => record.updatedAt.getTime()),
+    );
+    return new Date(newest);
+  }, [search.items]);
   const [deletionError, setDeletionError] = useState<string | null>(null);
 
   /** Deletes a class, then refreshes the list so the row disappears. */
@@ -64,8 +79,15 @@ export function AdminDashboardPage() {
             </h1>
             <p className="font-sans text-sm text-ink-600">
               {search.totalItems}{" "}
-              {search.totalItems === 1 ? "clase" : "clases"} · última
-              actualización hoy a las {formatTimeOfDay(new Date())}
+              {search.totalItems === 1
+                ? COPY.admin.classSingular
+                : COPY.admin.classPlural}
+              {lastUpdatedAt !== null && (
+                <>
+                  {" · "}
+                  {COPY.admin.lastUpdate}: {formatDateTime(lastUpdatedAt)}
+                </>
+              )}
             </p>
           </div>
 

@@ -105,6 +105,42 @@ describe("useClassSearch", () => {
     expect(recovered.current.items).toHaveLength(2);
   });
 
+  it("surfaces an error state when the repository throws instead of failing", async () => {
+    const repository = new InMemoryClassRepository({ records: RECORDS });
+    vi.spyOn(repository, "findPage").mockRejectedValue(new Error("boom"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const { result } = renderSearch(repository);
+
+    // Without a catch this would sit on "loading" forever.
+    await waitFor(() => {
+      expect(result.current.status).toBe("error");
+    });
+    expect(result.current.error?.code).toBe("classes/unknown");
+  });
+
+  it("counts once for a result set, however many pages are visited", async () => {
+    const repository = new InMemoryClassRepository({ records: RECORDS });
+    const countAll = vi.spyOn(repository, "countAll");
+    const { result } = renderSearch(repository);
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("success");
+    });
+    const countsAfterFirstPage = countAll.mock.calls.length;
+
+    act(() => {
+      result.current.goToPage(2);
+    });
+    await waitFor(() => {
+      expect(result.current.page).toBe(2);
+    });
+
+    // The total depends on the filters, not on which page is shown.
+    expect(countAll.mock.calls.length).toBe(countsAfterFirstPage);
+    expect(result.current.totalItems).toBe(5);
+  });
+
   it("re-runs the same query when retry is called", async () => {
     const repository = new InMemoryClassRepository({ records: RECORDS });
     const findPage = vi.spyOn(repository, "findPage");

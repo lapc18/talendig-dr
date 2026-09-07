@@ -26,15 +26,25 @@ import {
 } from "../schemas/classSchema";
 import type { ClassDraft } from "../types";
 
-/** Values a blank form starts from. */
-const BLANK_DRAFT: ClassFormInput = {
-  date: todayIsoDate(),
-  code: "",
-  name: "",
-  teacher: "",
-  link: "",
-  comment: "",
-};
+/**
+ * Values a blank form starts from.
+ *
+ * Built per render rather than held in a module constant: `todayIsoDate()`
+ * evaluated once at import would leave a tab opened yesterday defaulting to
+ * yesterday's date, which is plausible enough to be saved unnoticed.
+ *
+ * @returns The empty draft, dated today.
+ */
+function buildBlankDraft(): ClassFormInput {
+  return {
+    date: todayIsoDate(),
+    code: "",
+    name: "",
+    teacher: "",
+    link: "",
+    comment: "",
+  };
+}
 
 /** Props for {@link ClassForm}. */
 export interface ClassFormProps {
@@ -74,7 +84,7 @@ export function ClassForm({
     formState: { errors, isSubmitted },
   } = useForm<ClassFormInput, unknown, ClassFormValues>({
     resolver: zodResolver(classDraftSchema),
-    defaultValues: initialValues ?? BLANK_DRAFT,
+    defaultValues: initialValues ?? buildBlankDraft(),
     // Re-validating on change after the first attempt lets an error clear as
     // soon as it is fixed, instead of only on the next submit.
     mode: "onSubmit",
@@ -224,9 +234,7 @@ export function ClassForm({
             className="font-sans text-[12.5px] leading-[1.4] font-semibold text-danger"
             role={isBlockedByErrors ? "alert" : undefined}
           >
-            {isBlockedByErrors
-              ? `Corrige ${errorCount} ${errorCount === 1 ? "campo" : "campos"} para poder guardar.`
-              : ""}
+            {isBlockedByErrors ? COPY.form.fixFieldsToSave(errorCount) : ""}
           </span>
         ) : (
           <Button variant="danger" onClick={onDelete} disabled={isSaving}>

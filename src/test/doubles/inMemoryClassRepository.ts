@@ -9,7 +9,10 @@
 
 import { createAppError, type AppError } from "@/shared/lib/errors";
 import { fail, succeed, type Result } from "@/shared/lib/result";
-import type { ClassRepository } from "@/features/classes/services/classRepository";
+import type {
+  ClassFacetOptions,
+  ClassRepository,
+} from "@/features/classes/services/classRepository";
 import { normalizeForSearch } from "@/features/classes/services/searchKeywords";
 import type {
   ClassDraft,
@@ -159,30 +162,19 @@ export class InMemoryClassRepository implements ClassRepository {
   }
 
   /** @inheritdoc */
-  listTeachers(): Promise<Result<readonly string[], AppError>> {
+  listFacets(): Promise<Result<ClassFacetOptions, AppError>> {
     if (this.#failWith !== undefined) {
       return Promise.resolve(fail(this.#failWith));
     }
-    return Promise.resolve(
-      succeed(
-        [...new Set(this.#records.map((record) => record.teacher))].sort(
-          (a, b) => a.localeCompare(b, "es"),
-        ),
-      ),
-    );
-  }
 
-  /** @inheritdoc */
-  listCodes(): Promise<Result<readonly string[], AppError>> {
-    if (this.#failWith !== undefined) {
-      return Promise.resolve(fail(this.#failWith));
-    }
+    const distinct = (pick: (record: ClassRecord) => string): readonly string[] =>
+      [...new Set(this.#records.map(pick))].sort((a, b) => a.localeCompare(b, "es"));
+
     return Promise.resolve(
-      succeed(
-        [...new Set(this.#records.map((record) => record.code))].sort((a, b) =>
-          a.localeCompare(b, "es"),
-        ),
-      ),
+      succeed({
+        teachers: distinct((record) => record.teacher),
+        codes: distinct((record) => record.code),
+      }),
     );
   }
 

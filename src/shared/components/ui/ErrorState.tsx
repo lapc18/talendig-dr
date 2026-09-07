@@ -67,7 +67,7 @@ export function ErrorState({
         <Button
           variant="outline"
           onClick={() => {
-            window.location.assign("mailto:soporte@talendig.com");
+            window.location.assign(`mailto:${COPY.support.email}`);
           }}
         >
           {COPY.actions.contactSupport}

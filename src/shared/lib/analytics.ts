@@ -73,10 +73,13 @@ export interface AnalyticsEventPayloads {
 }
 
 /**
- * Resolved Analytics instance, or `null` when analytics is off for this build
- * or unsupported by the browser. `undefined` means "not resolved yet".
+ * The in-flight or settled resolution of the Analytics instance.
+ *
+ * The promise is cached rather than its result: several events fired in the
+ * same tick would otherwise each see "not resolved yet" and start their own
+ * initialisation before any of them finished.
  */
-let analyticsInstance: Analytics | null | undefined;
+let analyticsResolution: Promise<Analytics | null> | undefined;
 
 /**
  * Reports whether analytics should run in this build.
@@ -89,29 +92,24 @@ function isAnalyticsEnabled(): boolean {
 }
 
 /**
- * Resolves the Analytics instance once, caching the outcome.
+ * Resolves the Analytics instance once, caching the attempt itself.
  *
  * @returns The instance, or `null` when analytics is unavailable.
  */
-async function resolveAnalytics(): Promise<Analytics | null> {
-  if (analyticsInstance !== undefined) return analyticsInstance;
+function resolveAnalytics(): Promise<Analytics | null> {
+  analyticsResolution ??= (async () => {
+    if (!isAnalyticsEnabled()) return null;
 
-  if (!isAnalyticsEnabled()) {
-    analyticsInstance = null;
-    return null;
-  }
+    try {
+      return (await isSupported()) ? getAnalytics(firebaseApp) : null;
+    } catch (error) {
+      // A broken analytics SDK must never take the application down.
+      logger.warn("Analytics could not be initialised", { error });
+      return null;
+    }
+  })();
 
-  try {
-    analyticsInstance = (await isSupported())
-      ? getAnalytics(firebaseApp)
-      : null;
-  } catch (error) {
-    // A broken analytics SDK must never take the application down.
-    logger.warn("Analytics could not be initialised", { error });
-    analyticsInstance = null;
-  }
-
-  return analyticsInstance;
+  return analyticsResolution;
 }
 
 /**

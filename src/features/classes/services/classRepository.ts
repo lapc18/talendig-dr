@@ -12,6 +12,12 @@ import type { AppError } from "@/shared/lib/errors";
 import type { Result } from "@/shared/lib/result";
 import type { ClassDraft, ClassPage, ClassQuery, ClassRecord } from "../types";
 
+/** The option lists behind the filter dropdowns. */
+export interface ClassFacetOptions {
+  readonly teachers: readonly string[];
+  readonly codes: readonly string[];
+}
+
 /** Read-only access to class records. Used by the public consultation. */
 export interface ClassReader {
   /**
@@ -39,19 +45,15 @@ export interface ClassReader {
   findById(id: string): Promise<Result<ClassRecord, AppError>>;
 
   /**
-   * Lists the distinct teachers that have classes on record, for the filter
+   * Lists the distinct teachers and class codes on record, for the filter
    * dropdowns.
    *
-   * @returns Teacher names sorted alphabetically, or an `AppError`.
-   */
-  listTeachers(): Promise<Result<readonly string[], AppError>>;
-
-  /**
-   * Lists the distinct class codes on record, for the filter dropdowns.
+   * Both lists come from one call because they are derived from the same rows:
+   * asking for them separately would read the same documents twice.
    *
-   * @returns Class codes sorted alphabetically, or an `AppError`.
+   * @returns The two lists sorted alphabetically, or an `AppError`.
    */
-  listCodes(): Promise<Result<readonly string[], AppError>>;
+  listFacets(): Promise<Result<ClassFacetOptions, AppError>>;
 }
 
 /** Mutating access to class records. Used by the authenticated admin screens. */

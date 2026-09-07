@@ -252,6 +252,22 @@ describe("FirestoreClassRepository", () => {
       expect(result.ok && result.value.nextCursor).toBeNull();
     });
 
+    it("applies the words that could not reach the server", async () => {
+      getDocs.mockResolvedValue(docsSnapshot(3));
+
+      // Every stub document is "Fundamentos de React" by "Yokasta Reyes", so a
+      // second word the server could not filter on must exclude them all.
+      const matching = await new FirestoreClassRepository().findPage(
+        request({ filters: { ...EMPTY_CLASS_FILTERS, searchTerm: "fundamentos react" } }),
+      );
+      const notMatching = await new FirestoreClassRepository().findPage(
+        request({ filters: { ...EMPTY_CLASS_FILTERS, searchTerm: "fundamentos avanzado" } }),
+      );
+
+      expect(matching.ok && matching.value.items).toHaveLength(3);
+      expect(notMatching.ok && notMatching.value.items).toHaveLength(0);
+    });
+
     it("normalises a Firestore rejection instead of throwing", async () => {
       getDocs.mockRejectedValue({ code: "permission-denied" });
 
@@ -347,18 +363,31 @@ describe("FirestoreClassRepository", () => {
   });
 
   describe("filter options", () => {
-    it("collects distinct teachers from recent classes", async () => {
+    it("collects both lists from recent classes", async () => {
       getDocs.mockResolvedValue(docsSnapshot(3));
 
-      const result = await new FirestoreClassRepository().listTeachers();
+      const result = await new FirestoreClassRepository().listFacets();
 
-      expect(result.ok && result.value).toEqual(["Yokasta Reyes"]);
+      expect(result.ok && result.value).toEqual({
+        teachers: ["Yokasta Reyes"],
+        codes: ["DEV-101"],
+      });
+    });
+
+    it("reads the collection once for both lists", async () => {
+      getDocs.mockResolvedValue(docsSnapshot(3));
+
+      await new FirestoreClassRepository().listFacets();
+
+      // Both dropdowns come from the same rows; scanning twice would bill and
+      // download every document a second time.
+      expect(getDocs).toHaveBeenCalledTimes(1);
     });
 
     it("normalises a rejection instead of breaking the filters", async () => {
       getDocs.mockRejectedValue({ code: "unavailable" });
 
-      const result = await new FirestoreClassRepository().listCodes();
+      const result = await new FirestoreClassRepository().listFacets();
 
       expect(result.ok).toBe(false);
     });

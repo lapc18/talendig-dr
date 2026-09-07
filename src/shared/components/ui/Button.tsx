@@ -110,7 +110,6 @@ export function Button({
 
   return (
     <button
-      // eslint-disable-next-line react/button-has-type -- narrowed by the prop default
       type={type}
       disabled={isDisabled}
       aria-busy={isLoading}

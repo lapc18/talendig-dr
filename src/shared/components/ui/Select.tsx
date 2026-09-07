@@ -24,9 +24,17 @@ export interface SelectProps
   readonly placeholderLabel?: string;
 }
 
-/** Inline chevron, matching the `▾` glyph used across the design. */
-const CHEVRON_BACKGROUND =
-  "bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M1 1l4 4 4-4%22 fill=%22none%22 stroke=%22%23A8AEBF%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/></svg>')] bg-[length:10px_6px] bg-[position:right_14px_center] bg-no-repeat";
+/**
+ * Inline chevron, matching the `▾` glyph used across the design.
+ *
+ * Drawn with `currentColor` and coloured from a token, so it cannot drift from
+ * `--color-ink-400` the way a hex baked into the data URI would.
+ */
+const CHEVRON_BACKGROUND = cn(
+  "text-ink-400 bg-[image:var(--chevron)] bg-[length:10px_6px]",
+  "bg-[position:right_14px_center] bg-no-repeat",
+  "[--chevron:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M1 1l4 4 4-4%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/></svg>')]",
+);
 
 /**
  * Renders a select control.

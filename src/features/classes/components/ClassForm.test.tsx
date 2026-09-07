@@ -121,6 +121,19 @@ describe("ClassForm", () => {
     );
   });
 
+  it("defaults the date to today, not to the day the tab was opened", () => {
+    renderForm();
+
+    const today = new Date();
+    const expected = [
+      String(today.getFullYear()),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    expect(screen.getByLabelText(/Fecha/)).toHaveValue(expected);
+  });
+
   it("preloads existing values when editing", () => {
     renderForm({ initialValues: EXISTING, submitLabel: COPY.actions.saveChanges });
 

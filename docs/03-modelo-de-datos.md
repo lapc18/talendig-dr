@@ -76,10 +76,12 @@ Tres decisiones dentro de eso:
 - **Hasta 12 caracteres.** Acota cuánto crece el arreglo por documento.
 - **Sin acentos.** Se escribe `rosangela` y encuentra `Rosángela`.
 
-> ⚠️ **Limitación conocida.** Firestore permite un solo `array-contains` por
-> consulta, así que `toSearchKeyword` se queda con **el token más largo** y
-> descarta el resto. Buscar «python avanzado» devuelve todas las clases de
-> Python, aunque ninguna diga «avanzado». Está documentado en el código.
+> ⚠️ **Cómo funcionan las búsquedas de varias palabras.** Firestore permite un
+> solo `array-contains` por consulta, así que `toSearchKeyword` manda **la
+> palabra más selectiva** y `toResidualSearchTokens` devuelve el resto. Esas
+> palabras restantes se aplican sobre la página que Firestore devolvió, así que
+> «python avanzado» sí descarta las clases que no dicen «avanzado». El precio es
+> que el contador de resultados queda como cota superior en ese caso.
 
 ## Los índices compuestos
 
@@ -113,7 +115,14 @@ El rastro de cursores lo lleva
 conjunto de resultados no significan nada.
 
 El total sale de `getCountFromServer`, una agregación del servidor que **no**
-transfiere los documentos.
+transfiere los documentos. Se cuenta una vez por conjunto de resultados, no por
+página: el total depende de los filtros y del orden, nunca de qué página estás
+viendo.
+
+> Cuando la búsqueda lleva más de una palabra, solo la más selectiva llega a
+> Firestore; el resto se aplica sobre la página que volvió
+> ([`findPage`](../src/features/classes/services/firestoreClassRepository.ts)).
+> Por eso el total de `countAll` es una **cota superior** en ese caso.
 
 ## Las reglas de seguridad
 

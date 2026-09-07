@@ -19,7 +19,7 @@ import { Alert } from "@/shared/components/ui/Alert";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { Skeleton } from "@/shared/components/ui/Skeleton";
 import { COPY } from "@/shared/i18n/copy";
-import { formatShortDate } from "@/shared/utils/date";
+import { formatDateTime } from "@/shared/utils/date";
 
 /**
  * Reduces a full record to the fields the form owns.
@@ -65,10 +65,18 @@ export function ClassFormPage() {
   async function save(draft: ClassDraft): Promise<void> {
     setSaveError(null);
 
+    if (isEditing && record === null) {
+      // Falling through to `createClass` here would duplicate the class the
+      // teacher meant to edit. The render guard makes this unreachable today;
+      // the write path must not depend on a condition three components away.
+      setSaveError(COPY.errors.unexpected);
+      return;
+    }
+
     const result =
-      isEditing && record !== null
-        ? await updateClass(record.id, draft)
-        : await createClass(draft);
+      record === null
+        ? await createClass(draft)
+        : await updateClass(record.id, draft);
 
     if (result.ok) {
       returnToList();
@@ -113,7 +121,8 @@ export function ClassFormPage() {
 
             {record !== null && (
               <p className="font-sans text-xs leading-[1.4] font-medium text-ink-600">
-                Creada el {formatShortDate(record.date)} · editada por{" "}
+                {COPY.form.createdOn} {formatDateTime(record.createdAt)} ·{" "}
+                {COPY.form.editedBy}{" "}
                 {record.updatedBy === "" ? "—" : record.updatedBy}
               </p>
             )}
@@ -142,6 +151,10 @@ export function ClassFormPage() {
 
         {(!isEditing || record !== null) && (
           <ClassForm
+            // react-hook-form reads `defaultValues` once, so navigating between
+            // two edit URLs without unmounting would keep the previous class's
+            // values in the fields. The key forces a fresh form per record.
+            key={record?.id ?? "new"}
             initialValues={record === null ? undefined : toDraft(record)}
             knownTeachers={teachers}
             isSaving={isSaving}
