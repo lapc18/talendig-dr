@@ -187,8 +187,50 @@ problem — never as decoration.
 - **The README is part of the change.** A PR that adds a feature, an
   environment variable, a script, or a route and does not update `README.md` is
   incomplete. The README always describes the code as it is on `main`.
-- **`docs/` holds the design source and the design prompt.** Keep them in sync
-  when the design changes.
+
+### `docs/` is part of the change too
+
+`docs/` is the long explanation of the system, written in Spanish for someone
+who just joined and has never seen this code. It describes the codebase as it
+is on `main`, not as it once was. **Documentation drift is a defect, not a
+chore** — a doc that lies is worse than no doc, because it is trusted.
+
+Every change checks this table and updates what it touched. It is not optional
+and it is not a follow-up ticket.
+
+| If you changed… | Update |
+|---|---|
+| A field on a class, or a validation rule | `docs/03-modelo-de-datos.md` + the recipe in `docs/09-recetas.md` |
+| A filter, a query, or an index | `docs/03-modelo-de-datos.md` |
+| Anything about sign-in, sessions or route guards | `docs/04-autenticacion.md` |
+| A UI component, a design token, or a breakpoint | `docs/05-interfaz.md` |
+| An error path, a boundary, or an `AppErrorCode` | `docs/06-errores.md` |
+| A test double, or how tests are written | `docs/07-pruebas.md` |
+| A workflow, a secret, or hosting config | `docs/08-despliegue.md` |
+| A layer, a folder, or a pattern | `docs/02-arquitectura.md` |
+| A script or a command | `docs/01-guia-de-inicio.md` |
+| A term a newcomer would not know | `docs/glosario.md` |
+
+Rules for the prose:
+
+- **Spanish**, addressed to a junior developer. Explain the *why*; the code
+  already shows the *how*.
+- **Every file reference is a relative markdown link**, written from the
+  document's own directory. A link that 404s is a broken build of the
+  documentation, so check them before pushing:
+
+  ```bash
+  grep -oE '\]\(\.\.?/[^)]+\)' docs/*.md | sed 's/.*(\(.*\))/\1/' | \
+    while read -r p; do [ -e "docs/$p" ] || echo "roto: $p"; done
+  ```
+- **Never paste code that will drift.** Link to the file instead. Quote at most
+  the few lines that carry the idea, and only when the idea is the point.
+- **Record the trade-off, not just the decision.** The reason a choice was made
+  is what a newcomer cannot recover from the code.
+- **Renaming or deleting a file means grepping `docs/` for it.**
+
+`docs/design/` holds the design canvas and `docs/design-prompt.md` the prompt
+that produced it. Keep both in sync when the design changes.
 
 ---
 
@@ -226,5 +268,6 @@ A change is done when all of these hold:
 - [ ] No `any`, no non-null assertion (`!`) without a comment justifying it, no
       `@ts-ignore`.
 - [ ] `README.md` reflects the change.
+- [ ] `docs/` reflects the change — see the table in §10; every link resolves.
 - [ ] The UI matches `docs/design/talendig-classes-record.dc.html` — tokens from
       `src/styles/tokens.css`, never hardcoded hex values in components.

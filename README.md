@@ -11,9 +11,13 @@ Dos superficies sobre la misma base de datos:
   profesor o código, y abren la grabación.
 - **Administración** (`/admin`) — requiere sesión. CRUD completo de clases.
 
-La interfaz está en español; el código, los comentarios y la documentación
-están en inglés. Las reglas de trabajo del repositorio están en
-[`CLAUDE.md`](./CLAUDE.md) y son de cumplimiento obligatorio.
+La interfaz está en español; el código y los comentarios están en inglés. Las
+reglas de trabajo del repositorio están en [`CLAUDE.md`](./CLAUDE.md) y son de
+cumplimiento obligatorio.
+
+> **¿Nuevo en el proyecto?** Empieza por [`docs/`](./docs/README.md). Explica
+> cómo funciona todo y por qué está hecho así, en español y sin asumir que
+> conoces Firebase. Este README es la ficha; `docs/` es la explicación larga.
 
 ---
 
