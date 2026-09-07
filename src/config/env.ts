@@ -78,7 +78,7 @@ function loadEnvironment(): AppEnvironment {
       measurementId: readOptional("VITE_FIREBASE_MEASUREMENT_ID"),
     },
     authUsernameDomain:
-      readOptional("VITE_AUTH_USERNAME_DOMAIN") ?? "classes.talendig.local",
+      readOptional("VITE_AUTH_USERNAME_DOMAIN") ?? "talendig.local",
     enableAnalyticsInDev:
       readOptional("VITE_ENABLE_ANALYTICS_IN_DEV") === "true",
     isProduction: import.meta.env.PROD,

@@ -130,6 +130,22 @@ describe("FirebaseAuthService", () => {
       expect(!result.ok && result.error.code).toBe("auth/invalid-credentials");
     });
 
+    it("logs the account domain, the likeliest cause of a blanket failure", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      signInWithEmailAndPassword.mockRejectedValue({
+        code: "auth/invalid-credential",
+      });
+
+      await new FirebaseAuthService().signIn({
+        username: "yokasta.reyes",
+        password: "secreta",
+      });
+
+      expect(JSON.stringify(warn.mock.calls)).toContain(
+        "classes.talendig.test",
+      );
+    });
+
     it("never writes the credentials to the log", async () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
       signInWithEmailAndPassword.mockRejectedValue({ code: "auth/wrong-password" });

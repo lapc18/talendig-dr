@@ -68,7 +68,7 @@ con un error opaco de Firebase.
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | sí | |
 | `VITE_FIREBASE_APP_ID` | sí | |
 | `VITE_FIREBASE_MEASUREMENT_ID` | no | Sin ella, Analytics no se inicializa |
-| `VITE_AUTH_USERNAME_DOMAIN` | no | Por defecto `classes.talendig.local` |
+| `VITE_AUTH_USERNAME_DOMAIN` | no | Por defecto `talendig.local` |
 | `VITE_ENABLE_ANALYTICS_IN_DEV` | no | `true` para enviar eventos desde `pnpm dev` |
 
 ---
@@ -115,7 +115,7 @@ mano en la consola. No hay registro público.
 Firebase Auth no tiene proveedor de usuario/contraseña: solo email/contraseña.
 Como los profesores entran con un usuario simple, el servicio le agrega un
 dominio no enrutable configurable — `yokasta.reyes` inicia sesión como
-`yokasta.reyes@classes.talendig.local`. Ese dominio nunca tiene que resolver ni
+`yokasta.reyes@talendig.local`. Ese dominio nunca tiene que resolver ni
 recibir correo; crea las cuentas con esa forma de email.
 
 ### 3. Analytics
@@ -233,12 +233,24 @@ yokasta.reyes  →  yokasta.reyes@<VITE_AUTH_USERNAME_DOMAIN>
 
 El dominio nunca tiene que resolver ni recibir correo; es solo un espacio de
 nombres para cumplir con el formato de email. Sin el secret, la app usa
-`classes.talendig.local`.
+`talendig.local`.
 
 **Las cuentas en Firebase Auth tienen que crearse con exactamente ese dominio.**
-Si el secret dice `classes.talendig.local` pero creas
-`yokasta.reyes@talendig.com` en la consola, el login falla con «Usuario o
-contraseña incorrectos» y no hay ninguna pista de por qué.
+Si el secret dice `talendig.local` pero creas `yokasta.reyes@talendig.com` en la
+consola, el login falla con «Usuario o contraseña incorrectos» para todos los
+usuarios. El mensaje es deliberadamente genérico —no revela si la cuenta
+existe—, así que la pista está en la consola del navegador: un intento fallido
+registra el dominio que la app está usando.
+
+### Cómo se inicia sesión
+
+En el formulario se escribe **solo el usuario**, nunca el correo completo:
+
+| En la consola de Firebase creas | En el formulario se escribe |
+|---|---|
+| `yokasta.reyes@talendig.local` | `yokasta.reyes` |
+
+Escribir el correo completo falla, porque la app le vuelve a pegar el dominio.
 
 ### Activar el deploy automático
 
@@ -406,6 +418,6 @@ Pendiente antes de producción:
 - [ ] Restringir la API key web a `talendig-dr.web.app` y a los dominios de
       Talendig, en Google Cloud Console → *Credentials*
 - [ ] Crear las cuentas de los profesores en Firebase Auth, como
-      `usuario@classes.talendig.local` (habilitar el proveedor Email/Password)
+      `usuario@talendig.local` (habilitar el proveedor Email/Password)
 - [ ] Cargar el histórico de clases existente
 - [ ] Cambiar `deploy.yml` a disparo por push en `main`

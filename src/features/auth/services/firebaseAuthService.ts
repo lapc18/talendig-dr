@@ -4,7 +4,7 @@
  * Firebase Auth has no username provider, only email/password. Teachers sign in
  * with a bare username, so the service appends a configured, non-routable domain
  * to build the credential: `yokasta.reyes` becomes
- * `yokasta.reyes@classes.talendig.local`. Accounts are provisioned by an
+ * `yokasta.reyes@talendig.local`. Accounts are provisioned by an
  * administrator in the Firebase console — there is no public sign-up — and the
  * domain never has to resolve or receive mail.
  */
@@ -111,8 +111,13 @@ export class FirebaseAuthService implements AuthService {
 
       return succeed(toAuthenticatedUser(user));
     } catch (error) {
-      // Logged without the username so credentials never reach the console.
-      logger.warn("Sign-in attempt failed");
+      // The username is left out so credentials never reach the console, but
+      // the domain is recorded: it is public — it ships in the bundle — and a
+      // mismatch between it and the domain the accounts were created with is
+      // the likeliest cause of a sign-in that fails for every user.
+      logger.warn("Sign-in attempt failed", {
+        accountDomain: env.authUsernameDomain,
+      });
       return fail(toAuthError(error));
     }
   }
