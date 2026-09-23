@@ -60,7 +60,9 @@ while IFS= read -r line || [ -n "$line" ]; do
     continue
   fi
 
-  printf '%s' "$value" | gh secret set "$name" --env "$GH_ENVIRONMENT" --body -
+  # No --body: that flag takes a literal string, so `--body -` would store a
+  # dash. Omitting it makes gh read the value from standard input.
+  printf '%s' "$value" | gh secret set "$name" --env "$GH_ENVIRONMENT"
   echo "  set $name"
   count=$((count + 1))
 done < "$ENV_FILE"
