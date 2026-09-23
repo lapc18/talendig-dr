@@ -93,6 +93,22 @@ el bucle si el chunk falta de verdad, y se limpia cuando una carga funciona.
 Al usuario no se le dice «algo se rompió» sino **«Hay una versión nueva
 disponible»**, que es lo que pasó.
 
+## Configuración incompleta
+
+Si al build le faltó una variable de entorno, la app no puede conectarse a nada.
+Eso no es un error de red y no debe reportarse como tal.
+
+[`env.ts`](../src/config/env.ts) **no lanza** cuando falta una variable: se
+evalúa mientras los imports todavía se resuelven, por encima de React, así que
+un throw ahí no llegaría a ningún boundary y el visitante vería una pantalla en
+blanco. En vez de eso acumula los nombres en `missingEnvironmentKeys`, y
+[`App`](../src/app/App.tsx) muestra
+[`ConfigurationErrorScreen`](../src/app/ConfigurationErrorScreen.tsx) antes de
+montar nada.
+
+Esa pantalla lista **los nombres** de las variables que faltan, nunca sus
+valores: es visible para cualquiera.
+
 ## Lo que no llega a ningún boundary
 
 Una promesa rechazada que nadie esperó, o un error en un `setTimeout`, no pasa

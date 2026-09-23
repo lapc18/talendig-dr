@@ -29,20 +29,26 @@ export interface AppEnvironment {
   readonly isProduction: boolean;
 }
 
+/** Names of the required variables that were absent or blank. */
+const missingKeys: string[] = [];
+
 /**
- * Reads a required string variable.
+ * Reads a required string variable, recording it when absent.
+ *
+ * Deliberately does not throw: this module is evaluated while the application's
+ * imports are still resolving, above React, so a throw here would reach no
+ * error boundary and every visitor would get a blank page. The caller renders
+ * a designed screen from {@link missingEnvironmentKeys} instead.
  *
  * @param key - Name of the `VITE_*` variable.
- * @returns The trimmed value.
- * @throws {Error} When the variable is missing or blank.
+ * @returns The trimmed value, or an empty string when it is missing.
  */
 function readRequired(key: string): string {
   const value = import.meta.env[key] as string | undefined;
 
   if (typeof value !== "string" || value.trim() === "") {
-    throw new Error(
-      `Missing environment variable "${key}". Copy .env.example to .env.local and fill it in.`,
-    );
+    missingKeys.push(key);
+    return "";
   }
 
   return value.trim();
@@ -61,10 +67,9 @@ function readOptional(key: string): string | undefined {
 }
 
 /**
- * Loads and validates the environment.
+ * Loads the environment, recording any required variable that is absent.
  *
- * @returns The validated configuration.
- * @throws {Error} When a required variable is missing.
+ * @returns The configuration, with empty strings where values are missing.
  */
 function loadEnvironment(): AppEnvironment {
   return {
@@ -85,5 +90,13 @@ function loadEnvironment(): AppEnvironment {
   };
 }
 
-/** The validated application environment. */
+/** The application environment. Incomplete when {@link missingEnvironmentKeys} is not empty. */
 export const env: AppEnvironment = loadEnvironment();
+
+/**
+ * Required variables that were absent or blank.
+ *
+ * Empty means the build is configured. Anything else means the application
+ * cannot work and must say so rather than fail at the first Firebase call.
+ */
+export const missingEnvironmentKeys: readonly string[] = missingKeys;

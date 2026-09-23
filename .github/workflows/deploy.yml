@@ -49,6 +49,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_AUTH_USERNAME_DOMAIN: ${{ secrets.VITE_AUTH_USERNAME_DOMAIN }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           missing=""
@@ -69,6 +70,35 @@ jobs:
           # wrong instead of surfacing the next problem only after a fix.
           if [ -z "$VITE_FIREBASE_MEASUREMENT_ID" ]; then
             echo "::warning::VITE_FIREBASE_MEASUREMENT_ID is not set; Analytics will be disabled in this build."
+          fi
+
+          # Presence is not correctness. Two secrets once held each other's
+          # values — the sign-in domain held a measurement id — and the build
+          # shipped, because every variable was non-empty. These check the shape
+          # each value must have, and never echo a value.
+          malformed=""
+          expect() {
+            printf '%s' "$2" | grep -qE "$3" || malformed="$malformed $1"
+          }
+          expect VITE_FIREBASE_API_KEY "$VITE_FIREBASE_API_KEY" '^AIza[0-9A-Za-z_-]{30,}$'
+          expect VITE_FIREBASE_AUTH_DOMAIN "$VITE_FIREBASE_AUTH_DOMAIN" '^[a-z0-9.-]+\.[a-z]{2,}$'
+          expect VITE_FIREBASE_PROJECT_ID "$VITE_FIREBASE_PROJECT_ID" '^[a-z0-9-]+$'
+          expect VITE_FIREBASE_MESSAGING_SENDER_ID "$VITE_FIREBASE_MESSAGING_SENDER_ID" '^[0-9]+$'
+          expect VITE_FIREBASE_APP_ID "$VITE_FIREBASE_APP_ID" ':web:'
+          [ -z "$VITE_FIREBASE_MEASUREMENT_ID" ] || \
+            expect VITE_FIREBASE_MEASUREMENT_ID "$VITE_FIREBASE_MEASUREMENT_ID" '^G-[A-Z0-9]+$'
+          [ -z "$VITE_AUTH_USERNAME_DOMAIN" ] || \
+            expect VITE_AUTH_USERNAME_DOMAIN "$VITE_AUTH_USERNAME_DOMAIN" '^[a-z0-9.-]+\.[a-z]{2,}$'
+
+          # The Hosting target and the project the client talks to must agree,
+          # or the deploy publishes against a project the app never queries.
+          if [ "$VITE_FIREBASE_AUTH_DOMAIN" != "${VITE_FIREBASE_PROJECT_ID}.firebaseapp.com" ]; then
+            echo "::warning::VITE_FIREBASE_AUTH_DOMAIN is not <project-id>.firebaseapp.com — expected for a default Firebase setup."
+          fi
+
+          if [ -n "$malformed" ]; then
+            echo "::error::Secrets whose value does not match the expected shape:$malformed"
+            exit 1
           fi
 
           if [ -n "$missing" ]; then

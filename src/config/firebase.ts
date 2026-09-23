@@ -9,7 +9,25 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
-import { env } from "./env";
+import { env, missingEnvironmentKeys } from "./env";
+
+/**
+ * Stand-in configuration used when the build is missing variables.
+ *
+ * `getAuth` throws on an empty API key, and this module is evaluated above
+ * React, so that throw would blank the page. Initialising with syntactically
+ * valid placeholders keeps the import side-effect-free; `App` refuses to render
+ * the application at all when `missingEnvironmentKeys` is not empty, so no call
+ * ever reaches this configuration.
+ */
+const PLACEHOLDER_CONFIG = {
+  apiKey: "missing-api-key",
+  authDomain: "missing.invalid",
+  projectId: "missing-project",
+  storageBucket: "missing.invalid",
+  messagingSenderId: "0",
+  appId: "0:0:web:0",
+} as const;
 
 /**
  * Returns the singleton Firebase app, creating it on first call.
@@ -21,7 +39,11 @@ import { env } from "./env";
  */
 function getFirebaseApp(): FirebaseApp {
   const [existingApp] = getApps();
-  return existingApp ?? initializeApp(env.firebase);
+  if (existingApp !== undefined) return existingApp;
+
+  return initializeApp(
+    missingEnvironmentKeys.length === 0 ? env.firebase : PLACEHOLDER_CONFIG,
+  );
 }
 
 /** The singleton Firebase app instance. */

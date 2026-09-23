@@ -21,9 +21,22 @@ nada.
 
 ### Por qué deploy sí
 
-Vite **incrusta** las variables en el bundle al compilar. Si falta una, la app
-arranca con pantalla en blanco. Por eso el workflow verifica que estén completas
-**antes** de construir, y falla ahí en vez de publicar algo roto.
+Vite **incrusta** las variables en el bundle al compilar. Por eso el workflow
+las verifica **antes** de construir, y falla ahí en vez de publicar algo roto.
+
+Verifica dos cosas distintas:
+
+1. **Que estén** — sin ellas la app no puede conectarse a nada, y muestra
+   [`ConfigurationErrorScreen`](../src/app/ConfigurationErrorScreen.tsx).
+2. **Que tengan la forma correcta** — la API key empieza por `AIza`, el
+   measurement ID por `G-`, el sender ID son solo dígitos, los dominios parecen
+   dominios.
+
+> Lo segundo existe por un incidente real: `VITE_AUTH_USERNAME_DOMAIN` y
+> `VITE_FIREBASE_AUTH_DOMAIN` acabaron con los valores intercambiados al
+> renombrar un secret en la consola de GitHub. Todos estaban presentes, así que
+> el build pasó y **el login dejó de funcionar para todos**: la app autenticaba
+> contra `admin@G-R5K13C26GB`. Estar presente no es lo mismo que ser correcto.
 
 ## Los secrets
 
